@@ -63,28 +63,6 @@ public class PreviewDemo extends Activity {
         });
 
         Toast.makeText(ctx, getString(R.string.take_photo_help), Toast.LENGTH_LONG).show();
-
-//        		buttonClick = (Button) findViewById(R.id.btnCapture);
-//
-//        		buttonClick.setOnClickListener(new OnClickListener() {
-//        			public void onClick(View v) {
-//        //				preview.camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-//        				camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-//        			}
-//        		});
-//
-//        		buttonClick.setOnLongClickListener(new OnLongClickListener(){
-//        			@Override
-//        			public boolean onLongClick(View arg0) {
-//        				camera.autoFocus(new AutoFocusCallback(){
-//        					@Override
-//        					public void onAutoFocus(boolean arg0, Camera arg1) {
-//        						//camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-//        					}
-//        				});
-//        				return true;
-//        			}
-//        		});
     }
 
     @Override
