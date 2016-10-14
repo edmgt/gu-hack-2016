@@ -11,7 +11,7 @@ public class TestActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_test);
+        setContentView(R.layout.main_window);
         Button next = (Button) findViewById(R.id.camera_btn);
         next.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {

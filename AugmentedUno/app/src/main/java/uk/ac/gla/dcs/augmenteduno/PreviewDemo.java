@@ -19,7 +19,6 @@ import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
@@ -43,7 +42,7 @@ public class PreviewDemo extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.camera_activity);
 
         preview = new Preview(this, (SurfaceView)findViewById(R.id.surfaceView));
         preview.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -54,33 +53,38 @@ public class PreviewDemo extends Activity {
 
             @Override
             public void onClick(View arg0) {
-                camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+                camera.autoFocus(new Camera.AutoFocusCallback(){
+                    @Override
+                    public void onAutoFocus(boolean arg0, Camera arg1) {
+                        camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+                    }
+                });
             }
         });
 
         Toast.makeText(ctx, getString(R.string.take_photo_help), Toast.LENGTH_LONG).show();
 
-        //		buttonClick = (Button) findViewById(R.id.btnCapture);
-        //
-        //		buttonClick.setOnClickListener(new OnClickListener() {
-        //			public void onClick(View v) {
-        ////				preview.camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-        //				camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-        //			}
-        //		});
-        //
-        //		buttonClick.setOnLongClickListener(new OnLongClickListener(){
-        //			@Override
-        //			public boolean onLongClick(View arg0) {
-        //				camera.autoFocus(new AutoFocusCallback(){
-        //					@Override
-        //					public void onAutoFocus(boolean arg0, Camera arg1) {
-        //						//camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-        //					}
-        //				});
-        //				return true;
-        //			}
-        //		});
+//        		buttonClick = (Button) findViewById(R.id.btnCapture);
+//
+//        		buttonClick.setOnClickListener(new OnClickListener() {
+//        			public void onClick(View v) {
+//        //				preview.camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+//        				camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+//        			}
+//        		});
+//
+//        		buttonClick.setOnLongClickListener(new OnLongClickListener(){
+//        			@Override
+//        			public boolean onLongClick(View arg0) {
+//        				camera.autoFocus(new AutoFocusCallback(){
+//        					@Override
+//        					public void onAutoFocus(boolean arg0, Camera arg1) {
+//        						//camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+//        					}
+//        				});
+//        				return true;
+//        			}
+//        		});
     }
 
     @Override
