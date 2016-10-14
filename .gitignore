@@ -64,3 +64,5 @@ captures/
 .DS_Store
 /build
 /captures
+/AugmentedUno/.idea
+/AugmentedUno/.gradle
