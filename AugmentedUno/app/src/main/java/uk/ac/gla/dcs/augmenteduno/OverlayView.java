@@ -170,6 +170,17 @@ public class OverlayView extends View implements SensorEventListener {
 
     }
 
+    static final float ALPHA = 0.9
+    f; // if ALPHA = 1 OR 0, no filter applies.
+    protected float[] lowPass( float[] input, float[] output ) {
+        if ( output == null ) return input;
+        for ( int i=0; i<input.length; i++ ) {
+            output[i] = output[i] + ALPHA * (input[i] - output[i]);
+        }
+        return output;
+    }
+
+
     public void onSensorChanged(SensorEvent event) {
         // Log.d(DEBUG_TAG, "onSensorChanged");
 
@@ -181,14 +192,14 @@ public class OverlayView extends View implements SensorEventListener {
 
         switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
-                lastAccelerometer = event.values.clone();
+                lastAccelerometer = lowPass(event.values.clone(), lastAccelerometer);
                 accelData = msg.toString();
                 break;
             case Sensor.TYPE_GYROSCOPE:
                 gyroData = msg.toString();
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
-                lastCompass = event.values.clone();
+                lastCompass = lowPass(event.values.clone(), lastCompass);
                 compassData = msg.toString();
                 break;
         }
