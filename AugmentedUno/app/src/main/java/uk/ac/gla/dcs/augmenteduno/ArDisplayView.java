@@ -18,6 +18,8 @@ public class ArDisplayView extends SurfaceView implements
         SurfaceHolder.Callback {
     public static final String DEBUG_TAG = "ArDisplayView Log";
     Camera mCamera;
+
+    // which controls the drawing on the screen.
     SurfaceHolder mHolder;
     Activity mActivity;
 
@@ -36,6 +38,7 @@ public class ArDisplayView extends SurfaceView implements
         mHolder.addCallback(this);
     }
 
+    //    Here we request the Camera, set the camera’s display orientation based on the current orientation of the device (so that the camera preview always displays right-side up
     public void surfaceCreated(SurfaceHolder holder) {
         Log.d(DEBUG_TAG, "surfaceCreated");
 
@@ -72,6 +75,8 @@ public class ArDisplayView extends SurfaceView implements
             Log.e(DEBUG_TAG, "surfaceCreated exception: ", e);
         }
     }
+//Here we request the camera parameters and check what the supported preview sizes are. We need to find a preview size that ca
+// n be accommodated by the surface, so we look for the closest match and use it as our preview size.
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width,
                                int height) {
@@ -98,6 +103,7 @@ public class ArDisplayView extends SurfaceView implements
         mCamera.setParameters(params);
 
         // Begin previewing
+//        method to begin displaying the camera preview within our surface.
         mCamera.startPreview();
     }
 

@@ -11,41 +11,158 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.View;
+import android.text.Layout.Alignment;
+import android.text.StaticLayout;
+import android.text.TextPaint;
+import android.os.Handler;
+import android.hardware.Camera;
 
 public class OverlayView extends View implements SensorEventListener {
 
     public static final String DEBUG_TAG = "OverlayView Log";
+    private final Context context;
+    private Handler handler;
+
+
     String accelData = "Accelerometer Data";
     String compassData = "Compass Data";
     String gyroData = "Gyro Data";
+    private float[] lastAccelerometer;
+    private float[] lastCompass;
+    private float verticalFOV;
+    private float horizontalFOV;
+    private TextPaint contentPaint;
+    private SensorManager sensors = null;
+    private Paint targetPaint;
+    private boolean isAccelAvailable;
+    private boolean isCompassAvailable;
+    private boolean isGyroAvailable;
+    private Sensor accelSensor;
+    private Sensor compassSensor;
+    private Sensor gyroSensor;
+
+
 
     public OverlayView(Context context) {
         super(context);
+        this.context = context;
+        this.handler = new Handler();
 
+        sensors = (SensorManager) context
+                .getSystemService(Context.SENSOR_SERVICE);
+        accelSensor = sensors.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        compassSensor = sensors.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        gyroSensor = sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
-        SensorManager sensors = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        Sensor accelSensor = sensors.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        Sensor compassSensor = sensors.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        Sensor gyroSensor = sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        startSensors();
 
-        boolean isAccelAvailable = sensors.registerListener(this, accelSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        boolean isCompassAvailable = sensors.registerListener(this, compassSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        boolean isGyroAvailable = sensors.registerListener(this, gyroSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        // get some camera parameters
+        Camera camera = Camera.open();
+        Camera.Parameters params = camera.getParameters();
+        verticalFOV = params.getVerticalViewAngle();
+        horizontalFOV = params.getHorizontalViewAngle();
+        camera.release();
+
+        // paint for text
+        contentPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        contentPaint.setTextAlign(Align.LEFT);
+        contentPaint.setTextSize(100);
+        contentPaint.setColor(Color.RED);
+
+        // paint for target
+
+        targetPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        targetPaint.setColor(Color.GREEN);
     }
 
+    private void startSensors() {
+        isAccelAvailable = sensors.registerListener(this, accelSensor,
+                SensorManager.SENSOR_DELAY_NORMAL);
+        isCompassAvailable = sensors.registerListener(this, compassSensor,
+                SensorManager.SENSOR_DELAY_NORMAL);
+        isGyroAvailable = sensors.registerListener(this, gyroSensor,
+                SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+
+//The onDraw() method does all the work here. We configure a Paint with the appropriate text attributes and then draw some text on the canvas using the drawText() method.
     @Override
     protected void onDraw(Canvas canvas) {
         Log.d(DEBUG_TAG, "onDraw");
         super.onDraw(canvas);
 
         // Draw something fixed (for now) over the camera view
-        Paint contentPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        contentPaint.setTextAlign(Align.CENTER);
-        contentPaint.setTextSize(20);
-        contentPaint.setColor(Color.RED);
-        canvas.drawText(accelData, canvas.getWidth()/2, canvas.getHeight()/4, contentPaint);
-        canvas.drawText(compassData, canvas.getWidth()/2, canvas.getHeight()/2, contentPaint);
-        canvas.drawText(gyroData, canvas.getWidth()/2, (canvas.getHeight()*3)/4, contentPaint);
+        float curBearingToMW = 0.0f;
+
+        StringBuilder text = new StringBuilder(accelData).append("\n");
+        text.append(compassData).append("\n");
+        text.append(gyroData).append("\n");
+
+
+
+//        -----------------------------TUTORIAL 2 CODE ------------------------------------------
+
+        // compute rotation matrix
+        float rotation[] = new float[9];
+        float identity[] = new float[9];
+
+        if (lastAccelerometer != null && lastCompass != null) {
+            boolean gotRotation = SensorManager.getRotationMatrix(rotation,
+                    identity, lastAccelerometer, lastCompass);
+            if (gotRotation) {
+                float cameraRotation[] = new float[9];
+                // remap such that the camera is pointing straight down the Y
+                // axis
+                SensorManager.remapCoordinateSystem(rotation,
+                        SensorManager.AXIS_X, SensorManager.AXIS_Z,
+                        cameraRotation);
+
+                // orientation vector
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(cameraRotation, orientation);
+
+                text.append(
+                        String.format("Orientation (%.3f, %.3f, %.3f)",
+                                Math.toDegrees(orientation[0]), Math.toDegrees(orientation[1]), Math.toDegrees(orientation[2])))
+                        .append("\n");
+
+                // draw horizon line (a nice sanity check piece) and the target (if it's on the screen)
+                canvas.save();
+                // use roll for screen rotation
+                canvas.rotate((float)(0.0f- Math.toDegrees(orientation[2])));
+
+                // Translate, but normalize for the FOV of the camera -- basically, pixels per degree, times degrees == pixels
+                float dx = (float) ( (canvas.getWidth()/ horizontalFOV) * (Math.toDegrees(orientation[0])-curBearingToMW));
+                float dy = (float) ( (canvas.getHeight()/ verticalFOV) * Math.toDegrees(orientation[1])) ;
+
+                // wait to translate the dx so the horizon doesn't get pushed off
+                canvas.translate(0.0f, 0.0f-dy);
+
+
+                // make our line big enough to draw regardless of rotation and translation
+                canvas.drawLine(0f - canvas.getHeight(), canvas.getHeight()/2, canvas.getWidth()+canvas.getHeight(), canvas.getHeight()/2, targetPaint);
+
+                // now translate the dx
+                canvas.translate(0.0f-dx, 0.0f);
+
+                // draw our point -- we've rotated and translated this to the right spot already
+                canvas.drawCircle(canvas.getWidth(), canvas.getHeight(), 50.0f, targetPaint);
+
+                canvas.restore();
+
+            }
+        }
+
+        canvas.save();
+        canvas.translate(15.0f, 15.0f);
+        StaticLayout textBox = new StaticLayout(text.toString(), contentPaint,
+                480, Alignment.ALIGN_NORMAL, 1.0f, 0.0f, true);
+        textBox.draw(canvas);
+        canvas.restore();
+
+//        ---------------------------------------------------------------------------------------
+
+
     }
 
     public void onAccuracyChanged(Sensor arg0, int arg1) {
@@ -54,30 +171,40 @@ public class OverlayView extends View implements SensorEventListener {
     }
 
     public void onSensorChanged(SensorEvent event) {
-        Log.d(DEBUG_TAG, "onSensorChanged");
+        // Log.d(DEBUG_TAG, "onSensorChanged");
 
-        StringBuilder msg = new StringBuilder(event.sensor.getName()).append(" ");
-        for(float value: event.values)
-        {
-            msg.append("[").append(value).append("]");
+        StringBuilder msg = new StringBuilder(event.sensor.getName())
+                .append(" ");
+        for (float value : event.values) {
+            msg.append("[").append(String.format("%.3f", value)).append("]");
         }
 
-        switch(event.sensor.getType())
-        {
+        switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
+                lastAccelerometer = event.values.clone();
                 accelData = msg.toString();
                 break;
             case Sensor.TYPE_GYROSCOPE:
                 gyroData = msg.toString();
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
+                lastCompass = event.values.clone();
                 compassData = msg.toString();
                 break;
         }
 
-
         this.invalidate();
+    }
 
+
+    // this is not an override
+    public void onPause() {
+        sensors.unregisterListener(this);
+    }
+
+    // this is not an override
+    public void onResume() {
+        startSensors();
     }
 
 }
