@@ -1,6 +1,0 @@
-<resources>
-    <string name="app_name">Augmented Uno</string>
-    <string name="btn_capture">Click</string>
-    <string name="camera_not_found">No camera harware found</string>
-    <string name="take_photo_help">Touch anywhere on screen to take picture</string>
-</resources>
