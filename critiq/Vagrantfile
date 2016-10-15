@@ -1,0 +1,13 @@
+# -*- mode: ruby -*-
+# # vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/trusty64"
+  config.vm.box_version = "20160627.0.0"
+  config.vm.network "forwarded_port", guest: 5001, host: 5001
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 2048
+    vb.cpus = 4
+  end
+  config.vm.provision "shell", path: "INSTALL.sh"
+end

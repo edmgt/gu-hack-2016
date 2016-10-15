@@ -1,0 +1,7 @@
+<div style="border: 1px solid black; padding: 10px; margin: 10px;">
+    <p>{{ card_type }} | {{ scope_type }} |
+    <strong>{{ coverage_status.path }}</strong>
+    {% for line_miss in coverage_status.misses %}
+        <li>{{ line_miss }}: {{ coverage_status.content[line_miss-1] }}</li>
+    {% endfor %}
+</div>

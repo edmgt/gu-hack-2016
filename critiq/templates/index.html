@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Critiq</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+</head>
+<body>
+<h2>Repo</h2>
+Your current branch is: <strong>{{ current_branch }}</strong>
+<table>
+    <tr>
+        <td>
+            <p>Own issues:
+                {% for issue in own_issues %}
+                    <li>#{{ issue.iid }} - {{ issue.title }}</li>
+                {% endfor %}
+        </td>
+        <td>
+            <p>Local branches:
+                {% for branch in local_branches %}
+                    <li>{{ branch }}</li>
+                {% endfor %}
+        </td>
+        <td>
+            <p>Remote branches:</p>
+            {% for branch in remote_branches %}
+                <li>{{ branch.name }}</li>
+            {% endfor %}
+        </td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <td>
+            <h2>Status</h2>
+            <p><strong>Index changes:</strong> <br>
+                {{ index_changes.summary.added_files }} files added, {{ index_changes.summary.modified_files }} files
+                modified, {{ index_changes.summary.removed_files }} files removed<br>
+                {{ index_changes.summary.added_lines }} additions, {{ index_changes.summary.removed_lines }} removals
+            </p>
+        </td>
+        <td>
+            <p>Files:</p>
+            {% for file in index_changes.files %}
+                <li><strong>{{ file.path }}:</strong> +{{ file.added|length }}, -{{ file.removed|length }}</li>
+            {% endfor %}
+        </td>
+    </tr>
+</table>
+
+{% set card_type="Coverage" %}
+{% if coverage_new_index.summary.total_misses %}
+    {% set scope_type="Uncovered in index" %}
+    {% for coverage_status in coverage_new_index.files %}
+        {% if coverage_status.misses %}
+            {% include "coverage_card.html" %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{% if coverage_new_commit.summary.total_misses %}
+    {% set scope_type="Uncovered since last commit:" %}
+    {% for coverage_status in coverage_new_commit.files %}
+        {% if coverage_status.misses %}
+            {% include "coverage_card.html" %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{% if coverage_new_branch.summary.total_misses %}
+    {% set scope_type="Uncovered in branch" %}
+    {% for coverage_status in coverage_new_branch.files %}
+        {% if coverage_status.misses %}
+            {% include "coverage_card.html" %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{% set card_type="Problem" %}
+
+{% if problems_new_index.messages %}
+    {% set scope_type="New in index" %}
+    {% for problem in problems_new_index.messages %}
+        {% include "problem_card.html" %}
+    {% endfor %}
+{% endif %}
+
+{% if problems_new_commit.messages %}
+    {% set scope_type="New since last commit" %}
+    {% for problem in problems_new_commit.messages %}
+        {% include "problem_card.html" %}
+    {% endfor %}
+{% endif %}
+
+{% if problems_new_branch.messages %}
+    {% set scope_type="New in branch" %}
+    {% for problem in problems_new_branch.messages %}
+        {% include "problem_card.html" %}
+    {% endfor %}
+{% endif %}
+
+<h3>
+    <a href="javascript:$('#old-problems').toggle();">
+        Old problems
+    </a>
+</h3>
+<div hidden id="old-problems">
+    {% for problem in problems.messages %}
+        {% include "problem_card.html" %}
+    {% endfor %}
+</div>
+
+<h3>Overall coverage</h3>
+<pre>
+{{ coverage_report }}
+</pre>
+
+</body>
+</html>

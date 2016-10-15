@@ -1,0 +1,6 @@
+venv
+.vagrant
+cache
+.idea
+.coverage
+*.pyc
